@@ -14,19 +14,37 @@
 
 <style>
   html, body { margin: 0; padding: 0; height: 100%; }
-  #dtcb-map { height: 100%; width: 100%; }
-  .dtcb-download { background: #fff; font: 13px/1.4 system-ui, sans-serif; }
-  .dtcb-download a {
-    display: block; padding: 6px 10px; color: #1a1a1a; text-decoration: none;
-    border-bottom: 1px solid #ddd;
+  body { display: flex; flex-direction: column; font: 14px/1.4 system-ui, -apple-system, sans-serif; }
+
+  /* Map takes whatever height is left over. min-height:0 is required or a
+     flex item refuses to shrink below its content size. */
+  #dtcb-map { flex: 1 1 auto; min-height: 0; width: 100%; }
+
+  .dtcb-downloads {
+    flex: 0 0 auto;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: #f4f6f2; border-top: 1px solid #d8ddd3;
   }
-  .dtcb-download a:last-child { border-bottom: 0; }
-  .dtcb-download a:hover, .dtcb-download a:focus { background: #f0f4ee; }
+  .dtcb-downloads span { color: #4a4a4a; }
+  .dtcb-downloads a {
+    display: inline-block; padding: 7px 14px;
+    background: #1e8c3c; color: #fff; text-decoration: none; border-radius: 3px;
+    white-space: nowrap;
+  }
+  .dtcb-downloads a:hover, .dtcb-downloads a:focus { background: #176c2e; }
+  .dtcb-downloads a:focus-visible { outline: 2px solid #1a1a1a; outline-offset: 2px; }
 </style>
 </head>
 <body>
 
 <div id="dtcb-map"></div>
+
+<div class="dtcb-downloads">
+  <span>Download the service area boundaries:</span>
+  <a href="mojave_dtcb_stream_service_areas.kmz" download>KMZ</a>
+  <a href="mojave_dtcb_stream_service_areas.kml" download>KML</a>
+</div>
 
 <script>
 (function () {
@@ -78,19 +96,6 @@
   group.addTo(map);
   map.fitBounds(group.getBounds(), { padding: [20, 20] });
   map.once('click', function () { map.scrollWheelZoom.enable(); });
-
-  // Download control. These files sit in the same repo as this page, so they
-  // are same-origin and the `download` attribute is honoured by the browser.
-  var dl = L.control({ position: 'bottomleft' });
-  dl.onAdd = function () {
-    var d = L.DomUtil.create('div', 'leaflet-bar dtcb-download');
-    d.innerHTML =
-      '<a href="mojave_dtcb_stream_service_areas.kmz" download>Download KMZ</a>' +
-      '<a href="mojave_dtcb_stream_service_areas.kml" download>Download KML</a>';
-    L.DomEvent.disableClickPropagation(d);
-    return d;
-  };
-  dl.addTo(map);
 })();
 </script>
 
