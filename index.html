@@ -15,6 +15,13 @@
 <style>
   html, body { margin: 0; padding: 0; height: 100%; }
   #dtcb-map { height: 100%; width: 100%; }
+  .dtcb-download { background: #fff; font: 13px/1.4 system-ui, sans-serif; }
+  .dtcb-download a {
+    display: block; padding: 6px 10px; color: #1a1a1a; text-decoration: none;
+    border-bottom: 1px solid #ddd;
+  }
+  .dtcb-download a:last-child { border-bottom: 0; }
+  .dtcb-download a:hover, .dtcb-download a:focus { background: #f0f4ee; }
 </style>
 </head>
 <body>
@@ -71,6 +78,19 @@
   group.addTo(map);
   map.fitBounds(group.getBounds(), { padding: [20, 20] });
   map.once('click', function () { map.scrollWheelZoom.enable(); });
+
+  // Download control. These files sit in the same repo as this page, so they
+  // are same-origin and the `download` attribute is honoured by the browser.
+  var dl = L.control({ position: 'bottomleft' });
+  dl.onAdd = function () {
+    var d = L.DomUtil.create('div', 'leaflet-bar dtcb-download');
+    d.innerHTML =
+      '<a href="mojave_dtcb_stream_service_areas.kmz" download>Download KMZ</a>' +
+      '<a href="mojave_dtcb_stream_service_areas.kml" download>Download KML</a>';
+    L.DomEvent.disableClickPropagation(d);
+    return d;
+  };
+  dl.addTo(map);
 })();
 </script>
 
