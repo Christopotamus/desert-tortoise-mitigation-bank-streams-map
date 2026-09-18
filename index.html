@@ -12,28 +12,46 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap">
+
 <style>
   html, body { margin: 0; padding: 0; height: 100%; }
-  body { display: flex; flex-direction: column; font: 14px/1.4 system-ui, -apple-system, sans-serif; }
+  body { display: flex; flex-direction: column; font: 14px/1.4 Lora, Georgia, serif; }
 
   /* Map takes whatever height is left over. min-height:0 is required or a
      flex item refuses to shrink below its content size. */
   #dtcb-map { flex: 1 1 auto; min-height: 0; width: 100%; }
 
+  /* Download buttons: two side-by-side columns styled to match the site's
+     "Download Map" buttons. */
   .dtcb-downloads {
     flex: 0 0 auto;
-    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-    padding: 10px 12px;
-    background: #f4f6f2; border-top: 1px solid #d8ddd3;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    padding: 20px 16px 24px;
+    background: #fff; border-top: 1px solid #d8ddd3;
+    text-align: center;
   }
-  .dtcb-downloads span { color: #4a4a4a; }
+  .dtcb-downloads h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700; color: #1b1b1b;
+    text-transform: uppercase; letter-spacing: .18em; line-height: 1.5;
+  }
   .dtcb-downloads a {
-    display: inline-block; padding: 7px 14px;
-    background: #1e8c3c; color: #fff; text-decoration: none; border-radius: 3px;
-    white-space: nowrap;
+    display: inline-block; padding: 14px 28px;
+    background: #fff; color: #497b9e;
+    border: 1px solid #497b9e; border-radius: 3px;
+    font-size: 14px; text-decoration: none;
+    text-transform: uppercase; letter-spacing: .2em; white-space: nowrap;
+    transition: background .15s, color .15s;
   }
-  .dtcb-downloads a:hover, .dtcb-downloads a:focus { background: #176c2e; }
-  .dtcb-downloads a:focus-visible { outline: 2px solid #1a1a1a; outline-offset: 2px; }
+  .dtcb-downloads a:hover, .dtcb-downloads a:focus { background: #497b9e; color: #fff; }
+  .dtcb-downloads a:focus-visible { outline: 2px solid #1b1b1b; outline-offset: 2px; }
+
+  @media (max-width: 420px) {
+    .dtcb-downloads { grid-template-columns: 1fr; gap: 16px; }
+  }
 </style>
 </head>
 <body>
@@ -41,9 +59,14 @@
 <div id="dtcb-map"></div>
 
 <div class="dtcb-downloads">
-  <span>Download the service area boundaries:</span>
-  <a href="mojave_dtcb_stream_service_areas.kmz" download>KMZ</a>
-  <a href="mojave_dtcb_stream_service_areas.kml" download>KML</a>
+  <div>
+    <h2>Google Earth</h2>
+    <a href="mojave_dtcb_stream_service_areas.kmz" download>Download KMZ</a>
+  </div>
+  <div>
+    <h2>GIS / Other Software</h2>
+    <a href="mojave_dtcb_stream_service_areas.kml" download>Download KML</a>
+  </div>
 </div>
 
 <script>
