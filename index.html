@@ -24,19 +24,16 @@
      flex item refuses to shrink below its content size. */
   #dtcb-map { flex: 1 1 auto; min-height: 0; width: 100%; }
 
-  /* Download buttons: two side-by-side columns styled to match the site's
-     "Download Map" buttons. */
+  /* Download button: styled to match the site's "Download Map" buttons. */
   .dtcb-downloads {
     flex: 0 0 auto;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
     padding: 20px 16px 24px;
     background: #fff; border-top: 1px solid #d8ddd3;
     text-align: center;
   }
-  .dtcb-downloads h2 {
+  .dtcb-downloads p {
     margin: 0 0 12px;
-    font-size: 13px; font-weight: 700; color: #1b1b1b;
-    text-transform: uppercase; letter-spacing: .18em; line-height: 1.5;
+    font-size: 13px; color: #1b1b1b; line-height: 1.5;
   }
   .dtcb-downloads a {
     display: inline-block; padding: 14px 28px;
@@ -48,10 +45,6 @@
   }
   .dtcb-downloads a:hover, .dtcb-downloads a:focus { background: #497b9e; color: #fff; }
   .dtcb-downloads a:focus-visible { outline: 2px solid #1b1b1b; outline-offset: 2px; }
-
-  @media (max-width: 420px) {
-    .dtcb-downloads { grid-template-columns: 1fr; gap: 16px; }
-  }
 </style>
 </head>
 <body>
@@ -59,14 +52,8 @@
 <div id="dtcb-map"></div>
 
 <div class="dtcb-downloads">
-  <div>
-    <h2>Google Earth</h2>
-    <a href="mojave_dtcb_stream_service_areas.kmz" download>Download KMZ</a>
-  </div>
-  <div>
-    <h2>GIS / Other Software</h2>
-    <a href="mojave_dtcb_stream_service_areas.kml" download>Download KML</a>
-  </div>
+  <p>Service area boundaries (opens in Google Earth, QGIS, ArcGIS)</p>
+  <a href="mojave_dtcb_stream_service_areas.kmz" download>Download KMZ</a>
 </div>
 
 <script>
