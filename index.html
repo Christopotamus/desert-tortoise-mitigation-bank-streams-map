@@ -24,11 +24,20 @@
      flex item refuses to shrink below its content size. */
   #dtcb-map { flex: 1 1 auto; min-height: 0; width: 100%; }
 
+  /* Disclaimer line between the map and the download button. */
+  .dtcb-notice {
+    flex: 0 0 auto; margin: 0;
+    padding: 12px 16px 0;
+    background: #fff; border-top: 1px solid #d8ddd3;
+    text-align: center;
+    font-size: 13px; color: #1b1b1b; line-height: 1.5;
+  }
+
   /* Download button: styled to match the site's "Download Map" buttons. */
   .dtcb-downloads {
     flex: 0 0 auto;
-    padding: 20px 16px 24px;
-    background: #fff; border-top: 1px solid #d8ddd3;
+    padding: 12px 16px 24px;
+    background: #fff;
     text-align: center;
   }
   .dtcb-downloads p {
@@ -50,6 +59,8 @@
 <body>
 
 <div id="dtcb-map"></div>
+
+<p class="dtcb-notice">CDFW reserves the right to approve use of these credits outside of the bank service area</p>
 
 <div class="dtcb-downloads">
   <p>Service area boundaries (opens in Google Earth, QGIS, ArcGIS)</p>
