@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mojave Desert Tortoise Conservation Bank - RWQCB/Waters of the State Service Areas</title>
+
+<!-- RWQCB/Waters of the State Service Areas. Loads RWQCB_Waters_of_the_State_Service_Areas.kml
+     and offers that same KML for download. Must be served over http(s): the KML
+     is loaded with fetch(). -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body { display: flex; flex-direction: column; font: 14px/1.4 Lora, Georgia, serif; background: #fff; }
+
+  /* Map takes whatever height is left over. min-height:0 is required or a
+     flex item refuses to shrink below its content size. */
+  .dtcb-mapwrap { position: relative; flex: 1 1 auto; min-height: 0; }
+  #dtcb-map { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
+
+  .dtcb-status {
+    position: absolute; z-index: 1000; left: 50%; top: 16px; transform: translateX(-50%);
+    max-width: calc(100% - 32px);
+    padding: 8px 16px; background: rgba(255,255,255,.95); color: #1b1b1b;
+    border: 1px solid #497b9e; border-radius: 3px; text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  }
+  .dtcb-status.is-error { border-color: #b3261e; color: #b3261e; }
+
+  /* Text labels from the KML Point placemarks. */
+  .dtcb-label { background: none; border: 0; }
+  .dtcb-label span {
+    position: absolute; transform: translate(-50%, -50%);
+    white-space: nowrap; font: 700 13px/1.2 Lora, Georgia, serif;
+    text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
+  }
+
+  .dtcb-downloads {
+    flex: 0 0 auto;
+    padding: 16px 16px 20px;
+    background: #fff; border-top: 1px solid #d8ddd3;
+    text-align: center;
+  }
+  .dtcb-downloads p { margin: 0 0 12px; font-size: 13px; color: #1b1b1b; line-height: 1.5; }
+  .dtcb-downloads a {
+    display: inline-block; padding: 14px 28px;
+    background: #fff; color: #497b9e;
+    border: 1px solid #497b9e; border-radius: 3px;
+    font-size: 14px; text-decoration: none;
+    text-transform: uppercase; letter-spacing: .2em; white-space: nowrap;
+    transition: background .15s, color .15s;
+  }
+  .dtcb-downloads a:hover, .dtcb-downloads a:focus { background: #497b9e; color: #fff; }
+  .dtcb-downloads a:focus-visible { outline: 2px solid #1b1b1b; outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div class="dtcb-mapwrap">
+  <div id="dtcb-map"></div>
+  <div class="dtcb-status" id="dtcb-status" role="status" aria-live="polite" hidden></div>
+</div>
+
+<div class="dtcb-downloads">
+  <p>RWQCB/Waters of the State Service Areas</p>
+  <a href="RWQCB_Waters_of_the_State_Service_Areas.kml" download>Download KML</a>
+</div>
+
+<script>
+(function () {
+
+  var KML = 'RWQCB_Waters_of_the_State_Service_Areas.kml';
+
+  // ---- KML helpers --------------------------------------------------------
+
+  function esc(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function child(el, name) {
+    for (var i = 0; i < el.children.length; i++) {
+      if (el.children[i].localName === name) return el.children[i];
+    }
+    return null;
+  }
+
+  function text(el, name) {
+    var c = el && child(el, name);
+    return c ? c.textContent.trim() : '';
+  }
+
+  function all(el, name) {
+    return Array.prototype.slice.call(el.getElementsByTagNameNS('*', name));
+  }
+
+  // KML colors are aabbggrr hex.
+  function kmlColor(c) {
+    return {
+      hex: '#' + c.substr(6, 2) + c.substr(4, 2) + c.substr(2, 2),
+      alpha: parseInt(c.substr(0, 2), 16) / 255
+    };
+  }
+
+  // "lon,lat[,alt] lon,lat ..." -> [[lat, lng], ...]
+  function parseCoords(t) {
+    return t.trim().split(/\s+/).map(function (p) {
+      var a = p.split(',');
+      return [parseFloat(a[1]), parseFloat(a[0])];
+    });
+  }
+
+  function styleIndex(doc) {
+    var idx = {};
+    all(doc, 'Style').concat(all(doc, 'StyleMap')).forEach(function (s) {
+      var id = s.getAttribute('id');
+      if (id) idx[id] = s;
+    });
+    return idx;
+  }
+
+  // Inline <Style>, or #id -> <Style>, or #id -> <StyleMap> -> its "normal" pair.
+  function resolveStyle(pm, idx) {
+    var inline = child(pm, 'Style');
+    if (inline) return inline;
+    var s = idx[text(pm, 'styleUrl').replace(/^#/, '')];
+    if (s && s.localName === 'StyleMap') {
+      var pairs = all(s, 'Pair');
+      for (var i = 0; i < pairs.length; i++) {
+        if (text(pairs[i], 'key') === 'normal') {
+          return idx[text(pairs[i], 'styleUrl').replace(/^#/, '')] || null;
+        }
+      }
+      return null;
+    }
+    return s || null;
+  }
+
+  function pathOptions(style) {
+    var o = { color: '#3388ff', weight: 2, opacity: 1, fill: true, fillColor: '#3388ff', fillOpacity: 0.2 };
+    if (!style) return o;
+
+    var ls = child(style, 'LineStyle');
+    if (ls) {
+      var lc = text(ls, 'color');
+      if (lc) { var l = kmlColor(lc); o.color = l.hex; o.opacity = l.alpha; }
+      var w = parseFloat(text(ls, 'width'));
+      if (w) o.weight = Math.max(1, Math.min(5, w));   // Google Earth widths run large
+    }
+
+    var ps = child(style, 'PolyStyle');
+    if (ps) {
+      var pc = text(ps, 'color');
+      if (pc) {
+        var p = kmlColor(pc);
+        o.fillColor = p.hex; o.fillOpacity = p.alpha;
+        if (p.alpha === 0) o.fill = false;
+      }
+      if (text(ps, 'fill') === '0') o.fill = false;
+      if (text(ps, 'outline') === '0') o.stroke = false;
+    }
+    return o;
+  }
+
+  function labelIcon(name, style) {
+    var color = '#1b1b1b', size = 13;
+    var ls = style && child(style, 'LabelStyle');
+    if (ls) {
+      var c = text(ls, 'color');
+      if (c) color = kmlColor(c).hex;
+      var sc = parseFloat(text(ls, 'scale'));
+      if (sc) size = Math.round(Math.max(11, Math.min(17, 11 * sc)));
+    }
+    return L.divIcon({
+      className: 'dtcb-label',
+      html: '<span style="color:' + color + ';font-size:' + size + 'px">' + esc(name) + '</span>',
+      iconSize: [0, 0]
+    });
+  }
+
+  // KML document -> one Leaflet layer group holding every placemark.
+  function buildLayer(doc) {
+    var idx = styleIndex(doc);
+    var group = L.featureGroup();
+
+    all(doc, 'Placemark').forEach(function (pm) {
+      var name = text(pm, 'name');
+      var style = resolveStyle(pm, idx);
+      var opts = pathOptions(style);
+      var popup = name ? '<strong>' + esc(name) + '</strong>' : null;
+
+      all(pm, 'Polygon').forEach(function (poly) {
+        var rings = [];
+        var outer = all(poly, 'outerBoundaryIs')[0];
+        if (!outer) return;
+        rings.push(parseCoords(text(all(outer, 'LinearRing')[0], 'coordinates')));
+        all(poly, 'innerBoundaryIs').forEach(function (inner) {
+          rings.push(parseCoords(text(all(inner, 'LinearRing')[0], 'coordinates')));
+        });
+        var layer = L.polygon(rings, opts).addTo(group);
+        if (popup) layer.bindPopup(popup);
+      });
+
+      all(pm, 'LineString').forEach(function (line) {
+        var lopts = { color: opts.color, weight: opts.weight, opacity: opts.opacity };
+        var layer = L.polyline(parseCoords(text(line, 'coordinates')), lopts).addTo(group);
+        if (popup) layer.bindPopup(popup);
+      });
+
+      all(pm, 'Point').forEach(function (pt) {
+        if (!name) return;
+        var ll = parseCoords(text(pt, 'coordinates'))[0];
+        L.marker(ll, { icon: labelIcon(name, style), interactive: false, keyboard: false }).addTo(group);
+      });
+    });
+    return group;
+  }
+
+  // ---- Page ---------------------------------------------------------------
+
+  var map = L.map('dtcb-map', {
+    scrollWheelZoom: false,
+    preferCanvas: true
+  }).setView([35, -117], 6);
+
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    subdomains: [],         // policy requires the single canonical host
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  map.once('click', function () { map.scrollWheelZoom.enable(); });
+  // The web font can change the bar heights after the map was sized.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { map.invalidateSize(); });
+  }
+
+  var statusEl = document.getElementById('dtcb-status');
+
+  function setStatus(msg, isError) {
+    statusEl.hidden = !msg;
+    statusEl.textContent = msg || '';
+    statusEl.classList.toggle('is-error', !!isError);
+  }
+
+  setStatus('Loading map…');
+
+  fetch(KML)
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + KML);
+      return r.text();
+    })
+    .then(function (kml) {
+      var doc = new DOMParser().parseFromString(kml, 'application/xml');
+      if (doc.getElementsByTagName('parsererror').length) throw new Error('could not parse ' + KML);
+      var group = buildLayer(doc);
+      group.addTo(map);
+      map.fitBounds(group.getBounds(), { padding: [20, 20] });
+      setStatus(null);
+    })
+    .catch(function (err) {
+      console.error(err);
+      setStatus('This map could not be loaded. You can still download the file below.', true);
+    });
+})();
+</script>
+
+</body>
+</html>
