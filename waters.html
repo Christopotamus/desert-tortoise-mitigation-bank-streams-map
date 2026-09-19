@@ -41,12 +41,12 @@
     text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
   }
 
-  /* Note between the map and the download button: a tinted callout in a
+  /* Note below the download button: a tinted callout in a
      720px column, with the text left-aligned inside it. */
   .dtcb-notice-wrap {
     flex: 0 0 auto;
-    padding: 16px 16px 4px;
-    background: #fff; border-top: 1px solid #d8ddd3;
+    padding: 4px 16px 24px;
+    background: #fff;
   }
   .dtcb-notice {
     box-sizing: border-box; max-width: 720px; margin: 0 auto;
@@ -60,8 +60,8 @@
 
   .dtcb-downloads {
     flex: 0 0 auto;
-    padding: 12px 16px 20px;
-    background: #fff;
+    padding: 20px 16px 16px;
+    background: #fff; border-top: 1px solid #d8ddd3;
     text-align: center;
   }
   .dtcb-downloads p { margin: 0 0 12px; font-size: 13px; color: #1b1b1b; line-height: 1.5; }
@@ -84,16 +84,16 @@
   <div class="dtcb-status" id="dtcb-status" role="status" aria-live="polite" hidden></div>
 </div>
 
+<div class="dtcb-downloads">
+  <p>RWQCB/Waters of the State Service Areas</p>
+  <a href="RWQCB_Waters_of_the_State_Service_Areas.kml" download>Download KML</a>
+</div>
+
 <div class="dtcb-notice-wrap">
   <div class="dtcb-notice">
     <p>The Mojave Desert Tortoise Conservation Bank also sells credits that satisfy Lahonton Regional Water Quality Control Board and the Colorado River Regional Water Quality Control Board in their jurisdictions.</p>
     <p>Contact these agencies to propose using them where your impact is located.</p>
   </div>
-</div>
-
-<div class="dtcb-downloads">
-  <p>RWQCB/Waters of the State Service Areas</p>
-  <a href="RWQCB_Waters_of_the_State_Service_Areas.kml" download>Download KML</a>
 </div>
 
 <script>
